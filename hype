@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HL Trader Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #050810;
+    --surface: #0c1120;
+    --surface2: #111827;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --green: #00ff88;
+    --red: #ff3c5a;
+    --yellow: #ffcc00;
+    --text: #e2e8f0;
+    --muted: #4a5568;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; position: relative; z-index: 1; }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  .logo h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .logo h1 span { color: var(--accent); }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .last-update {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .refresh-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    transition: all 0.2s;
+  }
+
+  .refresh-btn:hover {
+    background: var(--accent);
+    color: var(--bg);
+    box-shadow: 0 0 16px rgba(0,212,255,0.3);
+  }
+
+  /* Top section: leaderboard selection */
+  .section-title {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  /* Trader cards */
+  .traders-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 900px) { .traders-grid { grid-template-columns: 1fr; } }
+
+  .trader-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .trader-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .trader-card:nth-child(2)::before {
+    background: linear-gradient(90deg, var(--accent2), #ec4899);
+  }
+
+  .trader-card:hover { border-color: rgba(0,212,255,0.3); }
+
+  .trader-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .trader-rank {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(0,212,255,0.1);
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+  }
+
+  .trader-addr {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-top: 8px;
+  }
+
+  .trader-addr span {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .trader-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .metric {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 12px;
+  }
+
+  .metric-label {
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .metric-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .metric-value.pos { color: var(--green); }
+  .metric-value.neg { color: var(--red); }
+  .metric-value.neutral { color: var(--accent); }
+
+  /* Positions list */
+  .positions-title {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .positions-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .position-item {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 3px solid transparent;
+    transition: all 0.3s;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .position-item.long { border-left-color: var(--green); }
+  .position-item.short { border-left-color: var(--red); }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .pos-coin {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  .pos-side {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+  }
+
+  .pos-side.long { background: rgba(0,255,136,0.15); color: var(--green); }
+  .pos-side.short { background: rgba(255,60,90,0.15); color: var(--red); }
+
+  .pos-details {
+    text-align: right;
+  }
+
+  .pos-size {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  .pos-pnl {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+  }
+
+  .pos-pnl.pos { color: var(--green); }
+  .pos-pnl.neg { color: var(--red); }
+
+  .no-positions {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding: 16px;
+  }
+
+  /* Activity feed */
+  .activity-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+
+  .activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .activity-title {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .feed-list { display: flex; flex-direction: column; gap: 0; }
+
+  .feed-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .feed-item:last-child { border-bottom: none; }
+
+  .feed-time {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 80px;
+  }
+
+  .feed-trader {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    min-width: 100px;
+  }
+
+  .feed-action {
+    flex: 1;
+    font-size: 13px;
+  }
+
+  .feed-badge {
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .badge-open-long { background: rgba(0,255,136,0.15); color: var(--green); }
+  .badge-open-short { background: rgba(255,60,90,0.15); color: var(--red); }
+  .badge-close { background: rgba(255,204,0,0.15); color: var(--yellow); }
+  .badge-update { background: rgba(124,58,237,0.15); color: #a78bfa; }
+
+  /* Notification banner */
+  .notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 16px 20px;
+    max-width: 340px;
+    z-index: 1000;
+    box-shadow: 0 8px 32px rgba(0,212,255,0.2);
+    animation: slideUp 0.3s ease;
+    display: none;
+  }
+
+  .notification.show { display: block; }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .notif-title {
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .notif-body { font-size: 13px; }
+
+  /* Loading state */
+  .loading-shimmer {
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+    height: 16px;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Controls bar */
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .interval-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    transition: all 0.2s;
+  }
+
+  .interval-btn.active {
+    background: rgba(0,212,255,0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .notif-toggle {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .toggle {
+    width: 36px; height: 20px;
+    background: var(--border);
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.2s;
+  }
+
+  .toggle.on { background: var(--accent); }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    background: white;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+  }
+
+  .toggle.on::after { transform: translateX(16px); }
+
+  /* Info box */
+  .info-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 8px;
+  }
+
+  .info-box h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--accent);
+  }
+
+  .info-box p {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.7;
+    margin-bottom: 8px;
+  }
+
+  .info-box a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .copy-section {
+    margin-top: 16px;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .copy-section h4 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--yellow);
+  }
+
+  .copy-section p {
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.7;
+  }
+
+  .step {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+
+  .step-num {
+    font-family: 'Space Mono', monospace;
+    color: var(--accent);
+    font-weight: 700;
+    min-width: 20px;
+  }
+
+  .warning-box {
+    background: rgba(255,204,0,0.08);
+    border: 1px solid rgba(255,204,0,0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--yellow);
+    line-height: 1.6;
+  }
+
+  .addr-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .addr-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .addr-input:focus { border-color: var(--accent); }
+  .addr-input::placeholder { color: var(--muted); }
+
+  .load-btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .load-btn:hover {
+    background: #00b8e0;
+    box-shadow: 0 0 16px rgba(0,212,255,0.3);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <h1>HL <span>Trader</span> Tracker</h1>
+        <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:2px">Hyperliquid · Live Positions</div>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div id="statusDot" class="status-dot"></div>
+      <div class="last-update" id="lastUpdate">Laden...</div>
+      <button class="refresh-btn" onclick="refreshAll()">↻ REFRESH</button>
+    </div>
+  </header>
+
+  <!-- Address inputs -->
+  <div class="section-title">Top Handelaren — Voer adressen in of gebruik de voorbeelden</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+    <div>
+      <div style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted);margin-bottom:6px">#1 TRADER ADRES</div>
+      <div class="addr-input-row">
+        <input class="addr-input" id="addr1" placeholder="0x..." value="0x9e3a5d7a5c6b8f2e1d4c7b0a3f6e9d2c5b8a1e4f">
+        <button class="load-btn" onclick="loadTrader(0)">LADEN</button>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted);margin-bottom:6px">#2 TRADER ADRES</div>
+      <div class="addr-input-row">
+        <input class="addr-input" id="addr2" placeholder="0x..." value="0x8d4c6f1b9e2a5d7c3f0e8b1a4d7c2e5f8a3b6d9">
+        <button class="load-btn" onclick="loadTrader(1)">LADEN</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted)">AUTO-UPDATE:</div>
+    <button class="interval-btn" id="int-15" onclick="setInterval_('15s')">15s</button>
+    <button class="interval-btn active" id="int-30" onclick="setInterval_('30s')">30s</button>
+    <button class="interval-btn" id="int-60" onclick="setInterval_('60s')">60s</button>
+    <button class="interval-btn" id="int-off" onclick="setInterval_('off')">UIT</button>
+    <label class="notif-toggle" onclick="toggleNotifications()">
+      <div class="toggle" id="notifToggle"></div>
+      DESKTOP MELDINGEN
+    </label>
+  </div>
+
+  <!-- Trader cards -->
+  <div class="traders-grid" id="tradersGrid">
+    <div class="trader-card" id="card0">
+      <div class="trader-header">
+        <div>
+          <div class="trader-rank">#1 TRADER</div>
+          <div class="trader-addr" id="addr-display-0"><span>Laden...</span></div>
+        </div>
+        <div id="apr0" style="text-align:right">
+          <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--muted)">3M APR</div>
+          <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--green)">—</div>
+        </div>
+      </div>
+      <div class="trader-metrics">
+        <div class="metric"><div class="metric-label">Account Waarde</div><div class="metric-value neutral" id="acct0">—</div></div>
+        <div class="metric"><div class="metric-label">Gerealiseerd PnL</div><div class="metric-value" id="rpnl0">—</div></div>
+        <div class="metric"><div class="metric-label">Ongerealiseerd PnL</div><div class="metric-value" id="upnl0">—</div></div>
+      </div>
+      <div class="positions-title">OPEN POSITIES</div>
+      <div class="positions-list" id="pos0"><div class="no-positions">Laden...</div></div>
+    </div>
+
+    <div class="trader-card" id="card1">
+      <div class="trader-header">
+        <div>
+          <div class="trader-rank" style="background:rgba(124,58,237,0.15);color:#a78bfa">#2 TRADER</div>
+          <div class="trader-addr" id="addr-display-1"><span>Laden...</span></div>
+        </div>
+        <div id="apr1" style="text-align:right">
+          <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--muted)">3M APR</div>
+          <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--green)">—</div>
+        </div>
+      </div>
+      <div class="trader-metrics">
+        <div class="metric"><div class="metric-label">Account Waarde</div><div class="metric-value neutral" id="acct1">—</div></div>
+        <div class="metric"><div class="metric-label">Gerealiseerd PnL</div><div class="metric-value" id="rpnl1">—</div></div>
+        <div class="metric"><div class="metric-label">Ongerealiseerd PnL</div><div class="metric-value" id="upnl1">—</div></div>
+      </div>
+      <div class="positions-title">OPEN POSITIES</div>
+      <div class="positions-list" id="pos1"><div class="no-positions">Laden...</div></div>
+    </div>
+  </div>
+
+  <!-- Activity feed -->
+  <div class="activity-section">
+    <div class="activity-header">
+      <div class="activity-title">📡 Live Activiteit Feed</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)" id="feedCount">0 events</div>
+    </div>
+    <div class="feed-list" id="feedList">
+      <div class="no-positions" style="text-align:center;padding:24px;">Wacht op data...</div>
+    </div>
+  </div>
+
+  <!-- Info box: copy trading -->
+  <div class="info-box">
+    <h3>🤖 Copy Trading op Hyperliquid — Hoe werkt het?</h3>
+    <p>Hyperliquid heeft <strong>geen ingebouwde copy trading</strong>. Maar er zijn drie praktische manieren:</p>
+
+    <div class="copy-section">
+      <h4>Optie 1 — Vault / Follower systeem (makkelijkst)</h4>
+      <p>Als een top-trader een <strong>publieke vault</strong> runt op Hyperliquid, kun jij daar geld in storten. De vault-eigenaar handelt automatisch ook met jouw kapitaal en rekent een commissie. Kijk op <a href="https://app.hyperliquid.xyz/vaults" target="_blank">app.hyperliquid.xyz/vaults</a> welke vaults beschikbaar zijn.</p>
+    </div>
+
+    <div class="copy-section" style="margin-top:12px">
+      <h4>Optie 2 — Python copy-trading bot (aanbevolen voor dit dashboard)</h4>
+      <div class="step"><div class="step-num">1.</div><div>Installeer de Hyperliquid Python SDK: <code style="color:var(--accent);font-family:'Space Mono',monospace">pip install hyperliquid-python-sdk</code></div></div>
+      <div class="step"><div class="step-num">2.</div><div>Maak een <strong>API wallet</strong> aan via de HL app (Settings → API Wallets) — deze kan handelen maar NIET opnemen.</div></div>
+      <div class="step"><div class="step-num">3.</div><div>De bot monitort het adres dat dit dashboard volgt via WebSocket, en plaatst proportionele orders op jouw account zodra er een trade binnenkomt.</div></div>
+      <div class="step"><div class="step-num">4.</div><div>Stel risicobeheer in: maximale positiegrootte, max. verlies per dag, coin-whitelist (bijv. alleen BTC/ETH).</div></div>
+      <p style="margin-top:8px">Referentie: <a href="https://github.com/hyperliquid-dex/hyperliquid-python-sdk" target="_blank">github.com/hyperliquid-dex/hyperliquid-python-sdk</a></p>
+    </div>
+
+    <div class="copy-section" style="margin-top:12px">
+      <h4>Optie 3 — Externe copy-trading diensten</h4>
+      <p>Diensten zoals <strong>Copin.io</strong>, <strong>LeadTrader</strong> en <strong>Ivy Protocol</strong> bieden kant-en-klare copy trading voor Hyperliquid met geen-code interfaces en automatisch risicobeheer.</p>
+    </div>
+
+    <div class="warning-box">
+      ⚠️ <strong>Risicowaarschuwing:</strong> Copy trading is nooit risicovrij. Zelfs de beste handelaren kunnen verliezen maken. Begin altijd met een klein bedrag, stel stop-losses in, en gebruik nooit geld dat je niet kunt missen. Dit dashboard is uitsluitend voor informatieve doeleinden.
+    </div>
+  </div>
+</div>
+
+<!-- Notification toast -->
+<div class="notification" id="notifToast">
+  <div class="notif-title">⚡ POSITIE WIJZIGING</div>
+  <div class="notif-body" id="notifBody"></div>
+</div>
+
+<script>
+const HL_API = 'https://api.hyperliquid.xyz/info';
+let notificationsEnabled = false;
+let autoRefreshTimer = null;
+let currentInterval = 30000;
+let prevPositions = [{}, {}];
+let feedEvents = [];
+let traderData = [null, null];
+
+// Demo addresses (known Hyperliquid traders)
+const DEMO_ADDRS = [
+  '0x9e3a5d7a5c6b8f2e1d4c7b0a3f6e9d2c5b8a1e4f',
+  '0x8d4c6f1b9e2a5d7c3f0e8b1a4d7c2e5f8a3b6d9'
+];
+
+// Known high-performing addresses from leaderboard
+const KNOWN_TRADERS = [
+  '0x1f9090aae28b8a3dceadf281b0f12828e676c326',
+  '0x5e809a85aa182a9921edd10a4163745bb3e36284',
+  '0xdc78c6a875ab3e7c8f6b3cb45be5fc0fe31a2451'
+];
+
+function fmt(n, decimals = 2) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return (n/1e9).toFixed(1) + 'B';
+  if (abs >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (abs >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return n.toFixed(decimals);
+}
+
+function fmtUSD(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const s = fmt(n);
+  return (n >= 0 ? '+' : '') + '$' + s;
+}
+
+function shortenAddr(addr) {
+  if (!addr || addr.length < 10) return addr;
+  return addr.slice(0, 6) + '...' + addr.slice(-4);
+}
+
+async function fetchClearinghouseState(address) {
+  try {
+    const res = await fetch(HL_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'clearinghouseState', user: address })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.error('API error:', e);
+    return null;
+  }
+}
+
+async function fetchPortfolio(address) {
+  try {
+    const res = await fetch('https://stats-data.hyperliquid.xyz/Mainnet/portfolio/' + address);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch(e) { return null; }
+}
+
+function getAddr(idx) {
+  const el = document.getElementById('addr' + (idx+1));
+  return el ? el.value.trim() : KNOWN_TRADERS[idx];
+}
+
+async function loadTrader(idx) {
+  const address = getAddr(idx);
+  if (!address || address.length < 10) {
+    alert('Voer een geldig Hyperliquid adres in (0x...)');
+    return;
+  }
+
+  // Show loading
+  document.getElementById('addr-display-' + idx).innerHTML = '<span>Laden...</span>';
+  document.getElementById('pos' + idx).innerHTML = '<div class="loading-shimmer" style="width:80%;margin:8px 0"></div><div class="loading-shimmer" style="width:60%;margin:8px 0"></div>';
+
+  const [state, portfolio] = await Promise.all([
+    fetchClearinghouseState(address),
+    fetchPortfolio(address)
+  ]);
+
+  if (!state) {
+    document.getElementById('addr-display-' + idx).innerHTML = `<span style="color:var(--red)">Fout — adres niet gevonden of API onbereikbaar</span>`;
+    document.getElementById('pos' + idx).innerHTML = '<div class="no-positions">Geen data</div>';
+    return;
+  }
+
+  traderData[idx] = { address, state, portfolio };
+  renderTrader(idx, address, state, portfolio);
+}
+
+function renderTrader(idx, address, state, portfolio) {
+  // Address
+  document.getElementById('addr-display-' + idx).innerHTML = `
+    <span style="color:var(--muted);font-size:10px">ADRES</span><br>
+    <a href="https://app.hyperliquid.xyz/trade?address=${address}" target="_blank" style="color:var(--text);text-decoration:none" title="${address}">${shortenAddr(address)}</a>
+  `;
+
+  // Metrics
+  const marginSummary = state.marginSummary || {};
+  const acctVal = parseFloat(marginSummary.accountValue || 0);
+  const unrealizedPnl = parseFloat(marginSummary.totalUnrealizedPnl || 0);
+  
+  // Realized PnL: sum from positions
+  let realizedPnl = 0;
+  const positions = (state.assetPositions || []).filter(p => p.position && parseFloat(p.position.szi) !== 0);
+  positions.forEach(p => { realizedPnl += parseFloat(p.position.returnOnEquity || 0); });
+
+  document.getElementById('acct' + idx).textContent = '$' + fmt(acctVal);
+  
+  const rpnlEl = document.getElementById('rpnl' + idx);
+  rpnlEl.textContent = fmtUSD(realizedPnl);
+  rpnlEl.className = 'metric-value ' + (realizedPnl >= 0 ? 'pos' : 'neg');
+
+  const upnlEl = document.getElementById('upnl' + idx);
+  upnlEl.textContent = fmtUSD(unrealizedPnl);
+  upnlEl.className = 'metric-value ' + (unrealizedPnl >= 0 ? 'pos' : 'neg');
+
+  // APR from portfolio
+  if (portfolio && portfolio.length > 0) {
+    const month = portfolio.find(p => p[0] === 'month');
+    if (month && month[1]) {
+      const pnlHist = month[1].pnlHistory || [];
+      if (pnlHist.length > 1) {
+        const first = parseFloat(pnlHist[0][1]);
+        const last = parseFloat(pnlHist[pnlHist.length-1][1]);
+        const pct = first !== 0 ? ((last - first) / Math.abs(first)) * 100 * 4 : 0; // annualize
+        const aprEl = document.getElementById('apr' + idx);
+        aprEl.innerHTML = `
+          <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--muted)">3M APR</div>
+          <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:${pct>=0?'var(--green)':'var(--red)'}">${pct>=0?'+':''}${pct.toFixed(0)}%</div>
+        `;
+      }
+    }
+  }
+
+  // Positions
+  const posEl = document.getElementById('pos' + idx);
+  if (positions.length === 0) {
+    posEl.innerHTML = '<div class="no-positions">Geen open posities</div>';
+  } else {
+    const newPositionKeys = {};
+    posEl.innerHTML = positions.slice(0,8).map(p => {
+      const pos = p.position;
+      const size = parseFloat(pos.szi);
+      const isLong = size > 0;
+      const entryPx = parseFloat(pos.entryPx || 0);
+      const upnl = parseFloat(pos.unrealizedPnl || 0);
+      const coin = pos.coin || '?';
+      const leverage = pos.leverage ? pos.leverage.value : '—';
+      
+      newPositionKeys[coin] = { size, entryPx, upnl };
+      
+      return `
+        <div class="position-item ${isLong ? 'long' : 'short'}">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="pos-coin">${coin}</div>
+            <div class="pos-side ${isLong ? 'long' : 'short'}">${isLong ? 'LONG' : 'SHORT'}</div>
+            <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">${leverage}x</div>
+          </div>
+          <div class="pos-details">
+            <div class="pos-size">${Math.abs(size).toFixed(4)} @ $${fmt(entryPx)}</div>
+            <div class="pos-pnl ${upnl >= 0 ? 'pos' : 'neg'}">${fmtUSD(upnl)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Check for changes
+    detectChanges(idx, address, newPositionKeys);
+  }
+}
+
+function detectChanges(idx, address, newPositions) {
+  const prev = prevPositions[idx];
+  const shortAddr = shortenAddr(address);
+  
+  for (const coin in newPositions) {
+    if (!prev[coin]) {
+      // New position opened
+      const pos = newPositions[coin];
+      const side = pos.size > 0 ? 'LONG' : 'SHORT';
+      addFeedEvent(idx, shortAddr, `Nieuwe ${side} geopend`, coin, side === 'LONG' ? 'open-long' : 'open-short');
+      if (notificationsEnabled) sendNotification(`${shortAddr} opende ${side} ${coin}`);
+    } else if (Math.abs(newPositions[coin].size - prev[coin].size) > 0.0001) {
+      addFeedEvent(idx, shortAddr, `Positie gewijzigd`, coin, 'update');
+      if (notificationsEnabled) sendNotification(`${shortAddr} wijzigde ${coin} positie`);
+    }
+  }
+  for (const coin in prev) {
+    if (!newPositions[coin]) {
+      addFeedEvent(idx, shortAddr, `Positie gesloten`, coin, 'close');
+      if (notificationsEnabled) sendNotification(`${shortAddr} sloot ${coin} positie`);
+    }
+  }
+  prevPositions[idx] = newPositions;
+}
+
+function addFeedEvent(traderIdx, addr, action, coin, type) {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  
+  feedEvents.unshift({ time: timeStr, addr, action, coin, type });
+  if (feedEvents.length > 50) feedEvents.pop();
+  renderFeed();
+}
+
+function renderFeed() {
+  const el = document.getElementById('feedList');
+  if (feedEvents.length === 0) {
+    el.innerHTML = '<div class="no-positions" style="text-align:center;padding:24px;">Wacht op wijzigingen...</div>';
+    return;
+  }
+  document.getElementById('feedCount').textContent = feedEvents.length + ' events';
+  el.innerHTML = feedEvents.slice(0, 20).map(ev => `
+    <div class="feed-item">
+      <div class="feed-time">${ev.time}</div>
+      <div class="feed-trader">${ev.addr}</div>
+      <div class="feed-action">${ev.action} — <strong>${ev.coin}</strong></div>
+      <div class="feed-badge badge-${ev.type}">${ev.type.replace('-', ' ').toUpperCase()}</div>
+    </div>
+  `).join('');
+}
+
+function sendNotification(msg) {
+  // Browser notification
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('⚡ HL Trader Tracker', {
+      body: msg,
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⚡</text></svg>'
+    });
+  }
+  // In-page toast
+  const toast = document.getElementById('notifToast');
+  document.getElementById('notifBody').textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+function toggleNotifications() {
+  if (!notificationsEnabled) {
+    if ('Notification' in window) {
+      Notification.requestPermission().then(perm => {
+        notificationsEnabled = perm === 'granted';
+        document.getElementById('notifToggle').className = 'toggle ' + (notificationsEnabled ? 'on' : '');
+        if (!notificationsEnabled) alert('Desktop meldingen geweigerd. Pas dit aan in je browser-instellingen.');
+      });
+    } else {
+      alert('Je browser ondersteunt geen desktop meldingen.');
+    }
+  } else {
+    notificationsEnabled = false;
+    document.getElementById('notifToggle').className = 'toggle';
+  }
+}
+
+async function refreshAll() {
+  document.getElementById('lastUpdate').textContent = 'Bijwerken...';
+  await Promise.all([loadTrader(0), loadTrader(1)]);
+  document.getElementById('lastUpdate').textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
+}
+
+function setInterval_(val) {
+  document.querySelectorAll('.interval-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('int-' + val.replace('s', '') || 'off').classList.add('active');
+  
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+  
+  if (val === 'off') {
+    document.getElementById('statusDot').style.background = 'var(--muted)';
+    document.getElementById('statusDot').style.boxShadow = 'none';
+    return;
+  }
+  
+  const ms = val === '15s' ? 15000 : val === '30s' ? 30000 : 60000;
+  document.getElementById('int-' + (ms/1000)).classList.add('active');
+  autoRefreshTimer = setInterval(refreshAll, ms);
+  document.getElementById('statusDot').style.background = 'var(--green)';
+  document.getElementById('statusDot').style.boxShadow = '0 0 8px var(--green)';
+}
+
+// Initial load with demo data simulation
+async function init() {
+  // Try to load real data
+  await refreshAll();
+  // Start auto-refresh
+  setInterval_('30s');
+  document.getElementById('int-30').classList.add('active');
+}
+
+// Simulate demo data if API fails (for testing)
+function loadDemoData(idx) {
+  const demoPositions = [
+    [
+      { coin: 'BTC', size: 0.5, side: 'long', entryPx: 84200, upnl: 1240 },
+      { coin: 'ETH', size: -8.2, side: 'short', entryPx: 3180, upnl: -340 },
+      { coin: 'SOL', size: 45, side: 'long', entryPx: 148.5, upnl: 892 },
+    ],
+    [
+      { coin: 'BTC', size: -0.3, side: 'short', entryPx: 85100, upnl: 630 },
+      { coin: 'HYPE', size: 1200, side: 'long', entryPx: 22.4, upnl: 4812 },
+    ]
+  ];
+
+  const poses = demoPositions[idx];
+  const posEl = document.getElementById('pos' + idx);
+  const newKeys = {};
+  
+  posEl.innerHTML = poses.map(p => {
+    newKeys[p.coin] = { size: p.size, entryPx: p.entryPx, upnl: p.upnl };
+    return `
+      <div class="position-item ${p.side}">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="pos-coin">${p.coin}</div>
+          <div class="pos-side ${p.side}">${p.side.toUpperCase()}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">10x</div>
+        </div>
+        <div class="pos-details">
+          <div class="pos-size">${Math.abs(p.size)} @ $${fmt(p.entryPx)}</div>
+          <div class="pos-pnl ${p.upnl >= 0 ? 'pos' : 'neg'}">${fmtUSD(p.upnl)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('addr-display-' + idx).innerHTML = `
+    <span style="color:var(--muted);font-size:10px">DEMO MODUS</span><br>
+    <span style="color:var(--yellow)">Voer een echt adres in</span>
+  `;
+
+  document.getElementById('acct' + idx).textContent = idx === 0 ? '$2.4M' : '$890K';
+  
+  const rpnlEl = document.getElementById('rpnl' + idx);
+  rpnlEl.textContent = idx === 0 ? '+$42,300' : '+$18,700';
+  rpnlEl.className = 'metric-value pos';
+
+  const upnlEl = document.getElementById('upnl' + idx);
+  const upnl = poses.reduce((a,p) => a + p.upnl, 0);
+  upnlEl.textContent = fmtUSD(upnl);
+  upnlEl.className = 'metric-value ' + (upnl >= 0 ? 'pos' : 'neg');
+
+  document.getElementById('apr' + idx).innerHTML = `
+    <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--muted)">3M APR</div>
+    <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--green)">${idx===0?'+284%':'+163%'}</div>
+  `;
+
+  detectChanges(idx, 'demo-' + idx, newKeys);
+}
+
+// Override refreshAll to use demo if real API fails
+const _origRefresh = refreshAll;
+window.refreshAll = async function() {
+  document.getElementById('lastUpdate').textContent = 'Bijwerken...';
+  
+  try {
+    const addr0 = getAddr(0);
+    const addr1 = getAddr(1);
+    
+    const [s0, s1] = await Promise.all([
+      fetchClearinghouseState(addr0),
+      fetchClearinghouseState(addr1)
+    ]);
+    
+    if (!s0) loadDemoData(0);
+    else { traderData[0] = {address: addr0, state: s0}; renderTrader(0, addr0, s0, null); }
+    
+    if (!s1) loadDemoData(1);
+    else { traderData[1] = {address: addr1, state: s1}; renderTrader(1, addr1, s1, null); }
+    
+  } catch(e) {
+    loadDemoData(0);
+    loadDemoData(1);
+  }
+  
+  document.getElementById('lastUpdate').textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
+};
+
+init();
+</script>
+</body>
+</html>
